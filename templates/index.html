@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D&D Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #chatbox {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            overflow-y: scroll;
+        }
+        #input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-top: 10px;
+        }
+        #send {
+            padding: 10px 20px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>D&D Chatbot</h1>
+    <div id="chatbox"></div>
+    <form id="chat-form" method="POST">
+        <input type="text" id="input" name="human_input" placeholder="Enter your message here" required>
+        <button type="submit" id="send">Send</button>
+    </form>
+
+    <script>
+        document.getElementById('chat-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const input = document.getElementById('input').value;
+            const chatbox = document.getElementById('chatbox');
+            chatbox.innerHTML += `<p><strong>You:</strong> ${input}</p>`;
+
+            const response = await fetch('/send_message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({human_input: input})
+            });
+
+            const message = await response.text();
+            chatbox.innerHTML += `<p><strong>DM:</strong> ${message}</p>`;
+            document.getElementById('input').value = '';
+            chatbox.scrollTop = chatbox.scrollHeight;
+        });
+    </script>
+</body>
+</html>
