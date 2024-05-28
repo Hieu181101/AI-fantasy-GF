@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>D&D Chatbot</title>
+    <title>Fantasy GF</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -23,15 +23,20 @@
             padding: 10px 20px;
             margin-top: 10px;
         }
+        audio {
+            margin-top: 20px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
-    <h1>D&D Chatbot</h1>
+    <h1>Fantasy GF</h1>
     <div id="chatbox"></div>
     <form id="chat-form" method="POST">
         <input type="text" id="input" name="human_input" placeholder="Enter your message here" required>
         <button type="submit" id="send">Send</button>
     </form>
+    <audio id="response-audio" controls></audio>
 
     <script>
         document.getElementById('chat-form').addEventListener('submit', async function(event) {
@@ -48,10 +53,19 @@
                 body: new URLSearchParams({human_input: input})
             });
 
-            const message = await response.text();
-            chatbox.innerHTML += `<p><strong>DM:</strong> ${message}</p>`;
+            const data = await response.json();
+            const message = data.text;
+            const audioFilePath = data.audio_file;
+
+            chatbox.innerHTML += `<p><strong>GF:</strong> ${message}</p>`;
             document.getElementById('input').value = '';
             chatbox.scrollTop = chatbox.scrollHeight;
+
+            if (audioFilePath) {
+                const audio = document.getElementById('response-audio');
+                audio.src = audioFilePath;
+                audio.play();
+            }
         });
     </script>
 </body>
