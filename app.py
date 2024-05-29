@@ -5,19 +5,19 @@ from langchain.memory import ConversationBufferWindowMemory
 from dotenv import load_dotenv, find_dotenv
 from flask import Flask, render_template, request, jsonify, send_file
 import os
+import logging
+import asyncio
+
+# Setup logging
+logging.basicConfig(level=logging.DEBUG)
 
 # Import OpenAI from the updated package
 from langchain_openai import OpenAI
 
 load_dotenv(find_dotenv())
 
-# Defer TTS initialization until it is first needed
-tts = None
-
-def initialize_tts():
-    global tts
-    if tts is None:
-        tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2", gpu=False)
+# Initialize TTS with GPU support
+tts = TTS("tts_models/en/ljspeech/tacotron2-DDC", gpu=False)
 
 def get_response_from_gf(human_input, history):
     template = (
@@ -45,19 +45,30 @@ def get_response_from_gf(human_input, history):
     )
 
     try:
+        logging.debug("Generating response from AI...")
         output = chatgpt_chain.predict(history=history, human_input=human_input)
         clean_output = output.replace("Bot Output:", "").strip()
+        logging.debug(f"AI response: {clean_output}")
         return clean_output
     except Exception as e:
-        print(f"Exception during predict: {e}")
+        logging.error(f"Exception during predict: {e}")
         return f"Error: {e}"
 
-def text_to_speech(message):
-    initialize_tts()  # Initialize TTS model if not already initialized
-    speaker_wav = "F:/AIfantasyGF/voice_preview_Arabella.wav"  # Path to your audio sample
+async def text_to_speech(message):
     audio_file_path = 'static/output.wav'
-    tts.tts_to_file(text=message, file_path=audio_file_path, speaker_wav=speaker_wav, language="en")
-    return audio_file_path
+    
+    # Split the message into shorter sentences if necessary
+    sentences = message.split('. ')
+    shortened_message = '. '.join(sentences[:3]) + '.' if len(sentences) > 3 else message
+    
+    try:
+        logging.debug("Generating audio response...")
+        tts.tts_to_file(text=shortened_message, file_path=audio_file_path)
+        logging.debug("Audio response generated successfully.")
+        return audio_file_path
+    except Exception as e:
+        logging.error(f"Exception during TTS processing: {e}")
+        return None
 
 app = Flask(__name__)
 
@@ -66,18 +77,21 @@ def home():
     return render_template("index.html")
 
 @app.route('/send_message', methods=['POST'])
-def send_message():
+async def send_message():
     human_input = request.form['human_input']
     history = ""  # Placeholder for history management
     message = get_response_from_gf(human_input, history)
-    audio_file_path = text_to_speech(message)
+    audio_file_path = await text_to_speech(message)
     if audio_file_path:
+        logging.debug(f"Sending response with audio file: {audio_file_path}")
         return jsonify({"text": message, "audio_file": audio_file_path})
     else:
+        logging.debug("Sending response without audio file.")
         return jsonify({"text": message, "audio_file": None})
 
 @app.route('/static/<path:filename>')
 def serve_audio(filename):
+    logging.debug(f"Serving audio file: {filename}")
     return send_file(os.path.join('static', filename))
 
 if __name__ == "__main__":
