@@ -23,9 +23,12 @@
             padding: 10px 20px;
             margin-top: 10px;
         }
-        audio {
-            margin-top: 20px;
-            width: 100%;
+        #microphone {
+            padding: 10px 20px;
+            margin-top: 10px;
+        }
+        img {
+            max-width: 100%;
         }
     </style>
 </head>
@@ -35,13 +38,43 @@
     <form id="chat-form" method="POST">
         <input type="text" id="input" name="human_input" placeholder="Enter your message here" required>
         <button type="submit" id="send">Send</button>
+        <button type="button" id="microphone">🎤</button>
     </form>
-    <audio id="response-audio" controls></audio>
 
     <script>
+        let recognizing = false;
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+
+        recognition.onresult = async function(event) {
+            const input = event.results[0][0].transcript;
+            await processInput(input);
+        };
+
+        recognition.onerror = function(event) {
+            console.error('Speech recognition error:', event.error);
+        };
+
+        document.getElementById('microphone').addEventListener('click', function() {
+            if (recognizing) {
+                recognition.stop();
+                recognizing = false;
+                console.log('Stopped recording.');
+            } else {
+                recognition.start();
+                recognizing = true;
+                console.log('Started recording.');
+            }
+        });
+
         document.getElementById('chat-form').addEventListener('submit', async function(event) {
             event.preventDefault();
             const input = document.getElementById('input').value;
+            await processInput(input);
+        });
+
+        async function processInput(input) {
             const chatbox = document.getElementById('chatbox');
             chatbox.innerHTML += `<p><strong>You:</strong> ${input}</p>`;
 
@@ -55,18 +88,23 @@
 
             const data = await response.json();
             const message = data.text;
-            const audioFilePath = data.audio_file;
+            const audio_file = data.audio_file;
+            const image_file = data.image_file;
 
             chatbox.innerHTML += `<p><strong>GF:</strong> ${message}</p>`;
-            document.getElementById('input').value = '';
-            chatbox.scrollTop = chatbox.scrollHeight;
-
-            if (audioFilePath) {
-                const audio = document.getElementById('response-audio');
-                audio.src = audioFilePath;
+            if (image_file) {
+                chatbox.innerHTML += `<img src="/static/${image_file}" alt="Generated Image">`;
+            }
+            if (audio_file) {
+                const audio = new Audio(`/static/${audio_file}`);
+                audio.oncanplaythrough = () => audio.play();
+                audio.onerror = (e) => console.error('Error playing audio:', e);
                 audio.play();
             }
-        });
+
+            document.getElementById('input').value = '';
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
     </script>
 </body>
 </html>
