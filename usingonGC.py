@@ -10,32 +10,32 @@ import os
 import logging
 import uuid
 import torch
+from torch import autocast
 from TTS.api import TTS
+import speech_recognition as sr
 from diffusers import StableDiffusionPipeline
 import openai
-from dotenv import load_dotenv, find_dotenv
 import gradio as gr
 import time
+from PIL import Image
+
 
 # Setup logging
 logging.basicConfig(level=logging.DEBUG)
-
-# Load environment variables from .env file
-load_dotenv(find_dotenv())
 
 # Set the OpenAI API key directly
 openai.api_key = "sk-proj-4MMN5HZhyKasV74nyIEBT3BlbkFJLiKM2QwLHdyCUkmvxu2m"
 
 os.environ['OPENAI_API_KEY'] = 'sk-proj-4MMN5HZhyKasV74nyIEBT3BlbkFJLiKM2QwLHdyCUkmvxu2m'
 
-
-
+# Set up OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 assert openai.api_key is not None, "OpenAI API key not found. Please set it in the environment variable."
 
 # Check GPU availability
 assert torch.cuda.is_available(), "CUDA is not available on this machine."
 
+torch.cuda.empty_cache()
 # Initialize TTS with GPU support
 tts = TTS("tts_models/en/ljspeech/tacotron2-DDC", gpu=True)
 
@@ -45,6 +45,37 @@ pipe = StableDiffusionPipeline.from_pretrained(
     torch_dtype=torch.float16,  # Use float16 for faster computation
     low_cpu_mem_usage=True
 ).to('cuda')  # Use 'cuda' for GPU
+
+# Generate the initial image only once
+
+gf_prompt = "1girl, aqua eyes, baseball cap, blonde hair, closed mouth, earrings, green background, hat, hoop earrings, jewelry, looking at viewer, shirt, short hair, simple background, solo, upper body, yellow shirt"
+  
+
+def generate_initial_image(gf_prompt):
+    pipe = StableDiffusionPipeline.from_pretrained(
+        'hakurei/waifu-diffusion',
+        torch_dtype=torch.float16  # Use float16 for reduced memory usage
+    ).to('cuda')
+
+    prompt = gf_prompt
+    try:
+        with autocast("cuda"):
+            result = pipe(prompt, guidance_scale=6)
+            if "images" in result:
+                image = result.images[0]
+                image_file_path = "./my_gf.png"
+                image.save(image_file_path)
+                logging.debug(f"Image saved at: {image_file_path}")
+                return image_file_path
+            else:
+                logging.error("Expected key 'images' not found in the output of the pipeline")
+                return None
+    except Exception as e:
+        logging.error(f"Exception during initial image generation: {e}")
+        return None
+
+initial_image_file_path = generate_initial_image(gf_prompt)
+logging.debug(f"Initial image file path: {initial_image_file_path}")
 
 def get_response_from_gf(human_input, history):
     start_time = time.time()
@@ -64,7 +95,7 @@ def get_response_from_gf(human_input, history):
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "system", "content": "You are my GirlFriend."},
                 {"role": "user", "content": prompt}
             ]
         )
@@ -83,12 +114,8 @@ def text_to_speech(message):
     audio_file_path = os.path.join('/content', unique_filename)
 
     try:
-        # Split the message into shorter sentences if necessary
-        sentences = message.split('. ')
-        shortened_message = '. '.join(sentences[:3]) + '.' if len(sentences) > 3 else message
-
-        logging.debug(f"Generating audio response for text: {shortened_message}")
-        tts.tts_to_file(text=shortened_message, file_path=audio_file_path)
+        logging.debug(f"Generating audio response for text: {message}")
+        tts.tts_to_file(text=message, file_path=audio_file_path)
         end_time = time.time()
         logging.debug("Audio response generated successfully.")
         logging.debug(f"TTS generation time: {end_time - start_time} seconds")
@@ -97,20 +124,23 @@ def text_to_speech(message):
         logging.error(f"Exception during TTS processing: {e}")
         return None
 
-def generate_image(gf_prompt):
-    start_time = time.time()
-    unique_image_filename = f'image_{uuid.uuid4().hex}.png'
-    image_file_path = os.path.join('/content', unique_image_filename)
 
+def speech_to_text(audio_file):
+    recognizer = sr.Recognizer()
+    with sr.AudioFile(audio_file) as source:
+        audio = recognizer.record(source)
     try:
-        image = pipe(gf_prompt, guidance_scale=6)["sample"][0]
-        image.save(image_file_path)
-        end_time = time.time()
-        logging.debug(f"Image generation time: {end_time - start_time} seconds")
-        return image_file_path
-    except Exception as e:
-        logging.error(f"Exception during image generation: {e}")
-        return None
+        text = recognizer.recognize_google(audio)
+        logging.debug(f"Recognized text: {text}")
+        return text
+    except sr.UnknownValueError:
+        logging.error("Google Speech Recognition could not understand audio")
+        return "Sorry, I did not get that."
+    except sr.RequestError as e:
+        logging.error(f"Could not request results from Google Speech Recognition service; {e}")
+        return "Sorry, I am having trouble understanding you right now."
+
+      
 
 def chat_with_gf(human_input):
     history = ""  # Placeholder for history management
@@ -127,26 +157,26 @@ def chat_with_gf(human_input):
     tts_end = time.time()
     logging.debug(f"Total TTS generation time: {tts_end - tts_start} seconds")
 
-    # Generate Image
-    image_start = time.time()
-    gf_prompt = "1girl, aqua eyes, baseball cap, blonde hair, closed mouth, earrings, green background, hat, hoop earrings, jewelry, looking at viewer, shirt, short hair, simple background, solo, upper body, yellow shirt"
-    image_file_path = generate_image(gf_prompt)
-    image_end = time.time()
-    logging.debug(f"Total image generation time: {image_end - image_start} seconds")
+    return response, audio_file_path, initial_image_file_path
 
-    return response, audio_file_path, image_file_path
+def voice_chat_with_gf(audio_file):
+    # Convert speech to text
+    human_input = speech_to_text(audio_file)
+    return chat_with_gf(human_input)
 
 # Define the Gradio interface
 interface = gr.Interface(
-    fn=chat_with_gf,
-    inputs="text",
+    fn=voice_chat_with_gf,
+    inputs=gr.Audio(source="microphone", type="filepath"),
     outputs=[
         gr.Textbox(label="Response from AI"),
         gr.Audio(label="Generated Audio"),
         gr.Image(label="Generated Image")
     ],
-    title="Fantasy GF Chatbot"
+    title="Fantasy GF Chatbot with Voice Input"
 )
 
+# Launch the interface
+interface.launch(share=True)
 # Launch the interface
 interface.launch(share=True)
