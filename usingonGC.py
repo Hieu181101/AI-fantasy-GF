@@ -117,18 +117,26 @@ def text_to_speech(message):
 
 def speech_to_text(audio_file):
     recognizer = sr.Recognizer()
-    with sr.AudioFile(audio_file) as source:
-        audio = recognizer.record(source)
     try:
-        text = recognizer.recognize_google(audio)
-        logging.debug(f"Recognized text: {text}")
-        return text
+        # Ensure audio_file is a file path
+        if isinstance(audio_file, str):
+            with sr.AudioFile(audio_file) as source:
+                audio = recognizer.record(source)
+            text = recognizer.recognize_google(audio)
+            logging.debug(f"Recognized text: {text}")
+            return text
+        else:
+            raise ValueError("Given audio file must be a filename string or a file-like object")
     except sr.UnknownValueError:
         logging.error("Google Speech Recognition could not understand audio")
         return "Sorry, I did not get that."
     except sr.RequestError as e:
         logging.error(f"Could not request results from Google Speech Recognition service; {e}")
         return "Sorry, I am having trouble understanding you right now."
+    except ValueError as ve:
+        logging.error(f"Value error: {ve}")
+        return "Error: Invalid audio file input."
+
 
 def chat_with_gf(human_input):
     history = ""  # Placeholder for history management
