@@ -1,11 +1,21 @@
-# Install required packages
-!pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
-!pip install TTS
-!pip install diffusers
-!pip install openai
-!pip install gradio
-!pip install accelerate
+!pip install numpy==1.23.5
+!pip install pandas==1.23.5
+!pip install openai==0.28.0
+!pip install flask tts diffusers nest_asyncio pyngrok langchain python-dotenv
 !pip install SpeechRecognition pydub
+!pip install torch==1.13.1+cu116 torchvision==0.14.1+cu116 torchaudio==0.13.1+cu116
+!pip install accelerate
+!pip install gradio
+!pip install gdown
+
+!pip install git+https://github.com/Rudrabha/LipGAN.git
+
+# Clone LipGAN repository and download pre-trained model
+!git clone https://github.com/Rudrabha/LipGAN.git
+!gdown https://drive.google.com/uc?id=1dw8k7x0K2Zh_XJ_lVYicPEhwJo1qxGX3 -O LipGAN/checkpoints/lipgan_res.pth
+
+
+
 
 import os
 import logging
