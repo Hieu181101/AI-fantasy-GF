@@ -1,33 +1,31 @@
-!pip install numpy==1.23.5
-!pip install pandas==1.23.5
-!pip install openai==0.28.0
-!pip install flask tts diffusers nest_asyncio pyngrok langchain python-dotenv
-!pip install torch==1.13.1+cu116 torchvision==0.14.1+cu116 torchaudio==0.13.1+cu116
-!pip install accelerate
+# Install required packages
+!pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
+!pip install TTS
+!pip install diffusers
+!pip install openai
 !pip install gradio
+!pip install accelerate
+!pip install SpeechRecognition pydub
 
 import os
 import logging
 import uuid
 import torch
-from torch import autocast
+from torch.cuda.amp import autocast  # Import autocast for mixed precision
 from TTS.api import TTS
-import speech_recognition as sr
 from diffusers import StableDiffusionPipeline
 import openai
 import gradio as gr
 import time
 from PIL import Image
-
+import speech_recognition as sr
 
 # Setup logging
 logging.basicConfig(level=logging.DEBUG)
-
 # Set the OpenAI API key directly
 openai.api_key = "sk-proj-4MMN5HZhyKasV74nyIEBT3BlbkFJLiKM2QwLHdyCUkmvxu2m"
 
 os.environ['OPENAI_API_KEY'] = 'sk-proj-4MMN5HZhyKasV74nyIEBT3BlbkFJLiKM2QwLHdyCUkmvxu2m'
-
 # Set up OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 assert openai.api_key is not None, "OpenAI API key not found. Please set it in the environment variable."
@@ -35,32 +33,24 @@ assert openai.api_key is not None, "OpenAI API key not found. Please set it in t
 # Check GPU availability
 assert torch.cuda.is_available(), "CUDA is not available on this machine."
 
-torch.cuda.empty_cache()
-# Initialize TTS with GPU support
+# Initialize TTS with CPU support to save GPU memory
 tts = TTS("tts_models/en/ljspeech/tacotron2-DDC", gpu=True)
 
-# Initialize the diffusion model to use GPU with low memory usage
-pipe = StableDiffusionPipeline.from_pretrained(
-    'hakurei/waifu-diffusion',
-    torch_dtype=torch.float16,  # Use float16 for faster computation
-    low_cpu_mem_usage=True
-).to('cuda')  # Use 'cuda' for GPU
+# Clear GPU cache to avoid memory issues
+torch.cuda.empty_cache()
 
-# Generate the initial image only once
-
+# Define the gf_prompt variable
 gf_prompt = "1girl, aqua eyes, baseball cap, blonde hair, closed mouth, earrings, green background, hat, hoop earrings, jewelry, looking at viewer, shirt, short hair, simple background, solo, upper body, yellow shirt"
-  
 
+# Function to generate the initial image
 def generate_initial_image(gf_prompt):
     pipe = StableDiffusionPipeline.from_pretrained(
         'hakurei/waifu-diffusion',
         torch_dtype=torch.float16  # Use float16 for reduced memory usage
     ).to('cuda')
-
-    prompt = gf_prompt
     try:
-        with autocast("cuda"):
-            result = pipe(prompt, guidance_scale=6)
+        with autocast(enabled=True):
+            result = pipe(gf_prompt, guidance_scale=6)
             if "images" in result:
                 image = result.images[0]
                 image_file_path = "./my_gf.png"
@@ -73,6 +63,7 @@ def generate_initial_image(gf_prompt):
     except Exception as e:
         logging.error(f"Exception during initial image generation: {e}")
         return None
+
 
 initial_image_file_path = generate_initial_image(gf_prompt)
 logging.debug(f"Initial image file path: {initial_image_file_path}")
@@ -95,7 +86,7 @@ def get_response_from_gf(human_input, history):
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are my GirlFriend."},
+                {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": prompt}
             ]
         )
@@ -124,7 +115,6 @@ def text_to_speech(message):
         logging.error(f"Exception during TTS processing: {e}")
         return None
 
-
 def speech_to_text(audio_file):
     recognizer = sr.Recognizer()
     with sr.AudioFile(audio_file) as source:
@@ -140,23 +130,21 @@ def speech_to_text(audio_file):
         logging.error(f"Could not request results from Google Speech Recognition service; {e}")
         return "Sorry, I am having trouble understanding you right now."
 
-      
-
 def chat_with_gf(human_input):
     history = ""  # Placeholder for history management
-
+    
     # Get AI response
     response_start = time.time()
     response = get_response_from_gf(human_input, history)
     response_end = time.time()
     logging.debug(f"Total response generation time: {response_end - response_start} seconds")
-
+    
     # Generate TTS audio
     tts_start = time.time()
     audio_file_path = text_to_speech(response)
     tts_end = time.time()
     logging.debug(f"Total TTS generation time: {tts_end - tts_start} seconds")
-
+    
     return response, audio_file_path, initial_image_file_path
 
 def voice_chat_with_gf(audio_file):
@@ -167,7 +155,7 @@ def voice_chat_with_gf(audio_file):
 # Define the Gradio interface
 interface = gr.Interface(
     fn=voice_chat_with_gf,
-    inputs=gr.Audio(source="microphone", type="filepath"),
+    inputs=gr.Audio(type="filepath"),
     outputs=[
         gr.Textbox(label="Response from AI"),
         gr.Audio(label="Generated Audio"),
@@ -177,6 +165,4 @@ interface = gr.Interface(
 )
 
 # Launch the interface
-interface.launch(share=True)
-# Launch the interface
-interface.launch(share=True)
+interface.launch(share=True, debug = True)
