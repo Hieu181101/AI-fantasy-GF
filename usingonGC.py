@@ -183,7 +183,7 @@ interface = gr.Interface(
     outputs=[
         gr.Textbox(label="Response from AI"),
         gr.Audio(label="Generated Audio"),
-        gr.Image(label="Generated Image")
+        gr.Image(value=initial_image_file_path, label="Generated Image")
     ],
     title="Fantasy GF Chatbot with Voice and Text Input"
 )
