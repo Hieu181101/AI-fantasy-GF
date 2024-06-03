@@ -8,13 +8,6 @@
 !pip install gradio
 !pip install gdown
 
-!pip install git+https://github.com/Rudrabha/LipGAN.git
-
-# Clone LipGAN repository and download pre-trained model
-!git clone https://github.com/Rudrabha/LipGAN.git
-!gdown https://drive.google.com/uc?id=1dw8k7x0K2Zh_XJ_lVYicPEhwJo1qxGX3 -O LipGAN/checkpoints/lipgan_res.pth
-
-
 
 
 import os
