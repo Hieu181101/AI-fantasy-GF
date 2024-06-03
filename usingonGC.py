@@ -165,22 +165,28 @@ def chat_with_gf(human_input):
     
     return response, audio_file_path, initial_image_file_path
 
+def text_chat_with_gf(text_input):
+    response, audio_file_path = chat_with_gf(text_input)[:2]
+    return response, audio_file_path, initial_image_file_path
+
 def voice_chat_with_gf(audio_file):
-    # Convert speech to text
     human_input = speech_to_text(audio_file)
     return chat_with_gf(human_input)
 
 # Define the Gradio interface
 interface = gr.Interface(
-    fn=voice_chat_with_gf,
-    inputs=gr.Audio(type="filepath"),
+    fn=lambda audio, text: voice_chat_with_gf(audio) if audio else text_chat_with_gf(text),
+    inputs=[
+        gr.Audio(type="filepath", label="Input Audio"),
+        gr.Textbox(label="Input Text")
+    ],
     outputs=[
         gr.Textbox(label="Response from AI"),
         gr.Audio(label="Generated Audio"),
         gr.Image(label="Generated Image")
     ],
-    title="Fantasy GF Chatbot with Voice Input"
+    title="Fantasy GF Chatbot with Voice and Text Input"
 )
 
 # Launch the interface
-interface.launch(share=True, debug = True)
+interface.launch(share=True, debug=True)
