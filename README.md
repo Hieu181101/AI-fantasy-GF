@@ -28,11 +28,22 @@ Luckily Hugging Face got us and I am able to find "waifu-diffusion v1.4 - Diffus
 
 
 ## Look Through
-![Screenshot (3)](https://github.com/Hieu181101/MAZA-visulization/assets/135567323/bcac7ded-c160-42b3-bc8e-e3994f4de9d5)
 
-![Screenshot (10)](https://github.com/Hieu181101/MAZA-visulization/assets/135567323/af1d346e-8d36-42ba-9e7f-d909bb1bc936)
+https://github.com/Hieu181101/AI-fantasy-GF/assets/135567323/96269a44-c49e-47c8-80b2-dd4accb4e504
 
-![Screenshot (6)](https://github.com/Hieu181101/MAZA-visulization/assets/135567323/1c7e18b0-43a4-43f0-b3fb-2a0ce732a1aa)
+https://github.com/Hieu181101/AI-fantasy-GF/assets/135567323/ef5d3e9d-0756-4a2f-8189-c60bb9d3408a
+
+https://github.com/Hieu181101/AI-fantasy-GF/assets/135567323/60b27a20-b13a-4354-a560-937e74eb35a5
+
+
+
+## I want her to move and lip-sync (Future project)
+
+
+https://github.com/Hieu181101/AI-fantasy-GF/assets/135567323/e2d7a753-3f3d-496f-905b-639102422d47
+
+
+
 
 
 
