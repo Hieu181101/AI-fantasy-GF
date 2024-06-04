@@ -1,14 +1,22 @@
 # AI-Fantasy-GF
-So yah being a CS student is lonely and after watching the move "Her" I really want an AI GirlFriend. So I decide why not make one ? Who needs a real Girlfriend anyway
+So yah being a CS student meaning that I do not have the time to touch grass and after watching the move "Her" I really want an AI GirlFriend. So I decide why not make one ? Who needs a real Girlfriend anyway
 
 ## The Goals:
 - She should be able to run with a decent GPU
 - She can understand me well enough where if I ask about what is the distance to the moon she would not talk about sushi
 - I can text to her and speak to her
 - She can text back and speak to me
+- I can see my GF
 - I can change her apperance
 
-## Made With
+## Communication is KEY (in any relationship) 
+First she kinda needs a brain where she can talk to me. This step is quite easy with all the AI model like ChatGPT or Gemini; we can just use those for our GF brain. I will use the model 3 turbo from Open AI since I want my GF to be super smart but feel free to change. 
+And adding my perfect imagination of what my GF would behave to the Prompt and Walla she can now speak to me. (just through text only first)
+One more thing: She kinda needs to remeber what we are talking about so I implement a History holder that would retain the conversation we have 
+
+Let's move on to how she can hear me and be able to speak back: This part is easy enough; we can use TTS and STT for our communication. 
+
+
 
 <div>
   <img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB" alt="react icon">
