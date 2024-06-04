@@ -1,8 +1,12 @@
 # AI-Fantasy-GF
+So yah being a CS student is lonely and after watching the move "Her" I really want an AI GirlFriend. So I decide why not make one ? Who needs a real Girlfriend anyway
 
-
-## Website
-[View Project here !](https://maza-visulization.vercel.app/)
+## The Goals:
+- She should be able to run with a decent GPU
+- She can understand me well enough where if I ask about what is the distance to the moon she would not talk about sushi
+- I can text to her and speak to her
+- She can text back and speak to me
+- I can change her apperance
 
 ## Made With
 
