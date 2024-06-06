@@ -1,5 +1,5 @@
 # AI-Fantasy-GF
-So yah being a CS student meaning that I do not have the time to touch grass and after watching the move "Her" I really want an AI GirlFriend. So I decide why not make one ? Who needs a real Girlfriend anyway
+So yah being a CS student meaning that I do not have the time to touch grass and after watching the move "Her" I really want an AI GirlFriend. So I decide why not make one ? Who needs a real Girlfriend anyway right
 
 ## The Goals:
 - She should be able to run with a decent GPU
