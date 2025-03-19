@@ -3,7 +3,7 @@ So yah being a CS student meaning that I do not have the time to touch grass and
 
 ## The Goals:
 - She should be able to run with a decent GPU
-- She can understand me well enough where if I ask about what is the distance to the moon she would not talk about sushisfsdfd
+- She can understand me well enough where if I ask about what is the distance to the moon she would not talk about sushi
 - I can text to her and speak to her
 - She can text back and speak to me
 - I can see my GF
